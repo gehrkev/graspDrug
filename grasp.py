@@ -23,7 +23,7 @@ def ler_dados(arquivo):
             adj[i].append((j, valor))
             adj[j].append((i, valor))
 
-        print(f"- Ignorados {count_ignorados} auto-loops")
+        # print(f"- Ignorados {count_ignorados} auto-loops")
         print(f"- Total de {len(pares)} pares com interação não-nula")
 
     return n, pares, adj
@@ -43,11 +43,13 @@ def avalia_solucao(S, pares):
 def calcula_delta(S, pos, adj):
     """
     Calcula o impacto de flipar o bit na posição pos usando lista de adjacência
+    Trata auto-loops (valor intrínseco do componente) separadamente das interações
     """
     delta = 0
-    # Só precisa olhar os vizinhos da posição
     for j, valor in adj[pos]:
-        if S[j] == 1:
+        if j == pos:  # auto-loop
+            delta += valor if S[pos] == 0 else -valor
+        elif S[j] == 1:  # interação com outro componente
             delta += valor if S[pos] == 0 else -valor
     return delta
 
@@ -162,14 +164,19 @@ if __name__ == "__main__":
         sys.exit(1)
 
     arquivo = sys.argv[1]
-    max_iter = 10  # número de replicações
+    max_iter = 1  # número de replicações
     max_iterations = 1000  # critério de parada
-    G = 0.3
+    G = 0.5
     E = 0
+
+    # Mede tempo de leitura
+    t_leitura = time.time()
+    n, pares, adj = ler_dados(arquivo)
+    tempo_leitura = time.time() - t_leitura
 
     melhor_valor = float('-inf')
     soma_valores = 0
-    tempo_total = 0
+    tempo_total = tempo_leitura  # inicia com o tempo de leitura
 
     print(f"Executando GRASP para {arquivo}")
     print(f"Parâmetros: G={G}, E={E}")
@@ -178,7 +185,6 @@ if __name__ == "__main__":
         print(f"\nReplicação {i + 1}/{max_iter}")
 
         t_inicio = time.time()
-        n, pares, adj = ler_dados(arquivo)
         S, valor = grasp(G, E)
         t_final = time.time() - t_inicio
 
@@ -187,7 +193,7 @@ if __name__ == "__main__":
         melhor_valor = max(melhor_valor, valor)
 
         print(f"Valor encontrado: {valor}")
-        print(f"Tempo: {t_final:.2f}s")
+        print(f"Tempo GRASP: {t_final:.2f}s")
 
     valor_medio = soma_valores / max_iter
     tempo_medio = tempo_total / max_iter
@@ -196,4 +202,3 @@ if __name__ == "__main__":
     print(f"Melhor valor: {melhor_valor}")
     print(f"Valor médio: {valor_medio:.2f}")
     print(f"Tempo médio: {tempo_medio:.2f}s")
-    print(S)
