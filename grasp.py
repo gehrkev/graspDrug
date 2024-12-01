@@ -1,29 +1,25 @@
 def ler_dados(arquivo):
     """
-    Lê arquivo .sparse e retorna número de componentes e dicionário de pares
-    - Ignora auto-loops (pares onde i == j)
-    - Pares não listados são implicitamente zero
+    Lê arquivo .sparse e retorna número de componentes, dicionário de pares
+        e lista de componentes adjacentes junto ao valor da interação entre eles.
+    - Pares não listados tem implicitamente valor zero
+    - Pares onde componente i = componente j apontam que o componente
+        sozinho produz algum valor à solução
     """
     with open(arquivo, 'r') as f:
         n, m = map(int, f.readline().split())  # num. componentes, pares
 
         pares = {}
-        adj = [[] for _ in range(n)]  # lista de n listas
+        adj = [[] for _ in range(n)]
 
-        count_ignorados = 0
         for _ in range(m):
             i, j, valor = map(int, f.readline().split())  # componentes e valor da interação
             i, j = i - 1, j - 1  # ajusta índices
-
-            # if i == j:  # ignora auto-loops
-            #     count_ignorados += 1
-            #     continue  # vai para o próximo ciclo do loop, sem adicionar os valores aos pares e adj abaixo
 
             pares[(i, j)] = valor  # dicionário com chave (i, j) e valor 'valor'
             adj[i].append((j, valor))
             adj[j].append((i, valor))
 
-        # print(f"- Ignorados {count_ignorados} auto-loops")
         print(f"- Total de {len(pares)} pares com interação não-nula")
 
     return n, pares, adj
@@ -48,9 +44,9 @@ def calcula_delta(S, pos, adj):
     delta = 0
     for j, valor in adj[pos]:
         if j == pos:  # auto-loop
-            delta += valor if S[pos] == 0 else -valor
+            delta += valor if S[pos] == 0 else -valor ## verificar se isso aqui não é a mesma coisa que o de baixo
         elif S[j] == 1:  # interação com outro componente
-            delta += valor if S[pos] == 0 else -valor
+            delta += valor if S[pos] == 0 else -valor ## verificar se isso aqui não é a mesma coisa que o de cima
     return delta
 
 
@@ -65,34 +61,26 @@ def simple_local_search(S0, E, n, adj):
     while melhorou:
         melhorou = False
 
+        melhor_delta = float('-inf')
+        melhor_pos = -1
+
         if E == 0:  # primeira melhoria
             for pos in range(n):
-                S_vizinho = S.copy()
-                S_vizinho[pos] = 1 - S_vizinho[pos]  # flip
                 delta = calcula_delta(S, pos, adj)
                 if delta > 0:
-                    S = S_vizinho.copy()
+                    S[pos] = 1 - S[pos]  # flip
                     melhorou = True
                     break
         else:  # melhor melhoria
-            vizinhos = []
             for pos in range(n):
-                S_vizinho = S.copy()
-                S_vizinho[pos] = 1 - S_vizinho[pos]
                 delta = calcula_delta(S, pos, adj)
-                vizinhos.append((S_vizinho, delta))
-
-            # Procura melhor vizinho
-            melhor_delta = 0
-            melhor_viz = None
-            for S_viz, delta in vizinhos:
                 if delta > melhor_delta:
                     melhor_delta = delta
-                    melhor_viz = S_viz
-
-            if melhor_viz is not None:
-                S = melhor_viz.copy()
+                    melhor_pos = pos
+            if melhor_delta > 0:
+                S[melhor_pos] = 1 - S[melhor_pos]
                 melhorou = True
+                break
 
     return S
 
@@ -164,10 +152,10 @@ if __name__ == "__main__":
         sys.exit(1)
 
     arquivo = sys.argv[1]
-    max_iter = 1  # número de replicações
+    max_iter = 10  # número de replicações
     max_iterations = 1000  # critério de parada
-    G = 0.5
-    E = 0
+    G = 0.3 # (0.0 = guloso até 1.0 = aleatório)
+    E = 0 # (0 = primeira melhoria, 1 = melhor melhoria)
 
     # Mede tempo de leitura
     t_leitura = time.time()
@@ -202,3 +190,4 @@ if __name__ == "__main__":
     print(f"Melhor valor: {melhor_valor}")
     print(f"Valor médio: {valor_medio:.2f}")
     print(f"Tempo médio: {tempo_medio:.2f}s")
+    print(f"Tempo total: {tempo_total:.2f}s")
