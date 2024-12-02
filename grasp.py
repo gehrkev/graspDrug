@@ -44,9 +44,9 @@ def calcula_delta(S, pos, adj):
     delta = 0
     for j, valor in adj[pos]:
         if j == pos:  # auto-loop
-            delta += valor if S[pos] == 0 else -valor ## verificar se isso aqui não é a mesma coisa que o de baixo
+            delta += valor if S[pos] == 0 else -valor
         elif S[j] == 1:  # interação com outro componente
-            delta += valor if S[pos] == 0 else -valor ## verificar se isso aqui não é a mesma coisa que o de cima
+            delta += valor if S[pos] == 0 else -valor
     return delta
 
 
@@ -100,7 +100,8 @@ def construcao(G, n, adj):
             delta = calcula_delta(S, c, adj)
             avaliacoes.append((c, delta))
 
-        avaliacoes = [av for av in avaliacoes if av[1] >= 0] # filtra mantendo só os pares onde o delta >= 0
+        # filtra mantendo só os pares onde o delta >= 0
+        avaliacoes = [av for av in avaliacoes if av[1] >= 0]
         if not avaliacoes:
             break
 
@@ -155,7 +156,7 @@ if __name__ == "__main__":
     max_iter = 10  # número de replicações
     max_iterations = 1000  # critério de parada
     G = 0.3 # (0.0 = guloso até 1.0 = aleatório)
-    E = 0 # (0 = primeira melhoria, 1 = melhor melhoria)
+    E = 1 # (0 = primeira melhoria, 1 = melhor melhoria)
 
     # Mede tempo de leitura
     t_leitura = time.time()
